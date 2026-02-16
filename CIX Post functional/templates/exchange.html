@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+
+{% block title %}Exchange{% endblock %}
+
+{% block content %}
+<!-- Exchange Header -->
+<div class="bundle-header">
+    <span class="bundle-header-icon">🔄</span>
+    <span><strong>Live Exchange:</strong> Real-time transactions across the marketplace</span>
+    <span style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+        <span class="status-dot online"></span>
+        <span style="color: var(--accent-green);">Live</span>
+    </span>
+</div>
+
+<!-- Exchange Stats -->
+<div class="metrics-row">
+    <div class="metric-card">
+        <div class="metric-label">
+            <span>📈</span> Today's Volume
+        </div>
+        <div class="metric-value" id="todayVolume">£12,450,000</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">
+            <span>🔢</span> Total Transactions
+        </div>
+        <div class="metric-value" id="totalTransactions">847</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">
+            <span>⚡</span> Active Traders
+        </div>
+        <div class="metric-value" id="activeTraders">156</div>
+    </div>
+</div>
+
+<!-- Live Transactions Table -->
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span>💱</span> Live Transactions
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="status-dot processing"></span>
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">Updating live...</span>
+        </div>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Transaction ID</th>
+                    <th>Type</th>
+                    <th>Asset</th>
+                    <th>Sector</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="transactionsTable">
+                <!-- Populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Recent Activity Chart -->
+<div class="charts-grid" style="margin-top: 30px;">
+    <div class="card">
+        <div class="card-header">
+            <span>📊</span> Transaction Volume (Last 24 Hours)
+        </div>
+        <div class="card-body">
+            <div class="chart-wrapper" style="height: 250px;">
+                <canvas id="volumeChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <span>🏆</span> Top Sectors by Volume
+        </div>
+        <div class="card-body">
+            <div class="chart-wrapper" style="height: 250px;">
+                <canvas id="sectorVolumeChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Fake transaction data generator
+    const sectors = ['Financial', 'Life Science', 'Clean Energy', 'Digital Tech', 'Real Estate', 'Creative', 'Retail', 'Defence'];
+    const locations = ['London', 'Cambridge', 'Edinburgh', 'Manchester', 'Oxford', 'Birmingham'];
+    const transactionTypes = ['BUY', 'SELL'];
+
+    let transactionCounter = 1000;
+
+    function generateTransaction() {
+        const type = transactionTypes[Math.floor(Math.random() * transactionTypes.length)];
+        const sector = sectors[Math.floor(Math.random() * sectors.length)];
+        const amount = Math.floor(Math.random() * 2000000) + 50000;
+        const now = new Date();
+
+        return {
+            time: now.toLocaleTimeString('en-GB'),
+            id: `TXN${transactionCounter++}`,
+            type: type,
+            asset: `ASST${String(Math.floor(Math.random() * 50) + 1).padStart(2, '0')}`,
+            sector: sector,
+            amount: amount,
+            status: Math.random() > 0.1 ? 'Completed' : 'Pending'
+        };
+    }
+
+    function formatCurrency(amount) {
+        if (amount >= 1000000) {
+            return '£' + (amount / 1000000).toFixed(2) + 'M';
+        }
+        return '£' + amount.toLocaleString('en-GB');
+    }
+
+    function renderTransaction(tx) {
+        const typeClass = tx.type === 'BUY' ? 'low' : 'high';
+        const statusClass = tx.status === 'Completed' ? 'low' : 'medium';
+
+        return `
+            <tr class="transaction-row">
+                <td style="color: var(--text-muted); font-size: 0.85rem;">${tx.time}</td>
+                <td style="font-weight: 600;">${tx.id}</td>
+                <td><span class="badge badge-risk ${typeClass}">${tx.type}</span></td>
+                <td>${tx.asset}</td>
+                <td><span class="badge badge-sector ${tx.sector.toLowerCase().replace(' ', '_')}">${tx.sector}</span></td>
+                <td style="font-weight: 600; color: ${tx.type === 'BUY' ? 'var(--accent-green)' : 'var(--accent-red)'};">${formatCurrency(tx.amount)}</td>
+                <td><span class="badge badge-risk ${statusClass}">${tx.status}</span></td>
+            </tr>
+        `;
+    }
+
+    // Initialize with some transactions
+    const transactions = [];
+    for (let i = 0; i < 15; i++) {
+        transactions.push(generateTransaction());
+    }
+
+    function updateTable() {
+        const tbody = document.getElementById('transactionsTable');
+        tbody.innerHTML = transactions.map(renderTransaction).join('');
+    }
+
+    // Add new transaction every 3 seconds
+    function addNewTransaction() {
+        const newTx = generateTransaction();
+        transactions.unshift(newTx);
+        if (transactions.length > 20) {
+            transactions.pop();
+        }
+        updateTable();
+
+        // Update metrics
+        updateMetrics();
+    }
+
+    let totalVolume = 12450000;
+    let totalTxCount = 847;
+
+    function updateMetrics() {
+        totalVolume += Math.floor(Math.random() * 500000);
+        totalTxCount++;
+
+        document.getElementById('todayVolume').textContent = '£' + totalVolume.toLocaleString('en-GB');
+        document.getElementById('totalTransactions').textContent = totalTxCount.toLocaleString();
+    }
+
+    // Volume chart
+    function renderVolumeChart() {
+        const ctx = document.getElementById('volumeChart').getContext('2d');
+        const hours = [];
+        const volumes = [];
+
+        for (let i = 23; i >= 0; i--) {
+            const hour = new Date();
+            hour.setHours(hour.getHours() - i);
+            hours.push(hour.getHours() + ':00');
+            volumes.push(Math.floor(Math.random() * 2000000) + 200000);
+        }
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: hours,
+                datasets: [{
+                    label: 'Volume (£)',
+                    data: volumes,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: value => '£' + (value / 1000000).toFixed(1) + 'M'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Sector volume chart
+    function renderSectorChart() {
+        const ctx = document.getElementById('sectorVolumeChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: sectors.slice(0, 6),
+                datasets: [{
+                    label: 'Volume (£)',
+                    data: [4200000, 3100000, 2800000, 1900000, 1500000, 950000],
+                    backgroundColor: ['#6366f1', '#10b981', '#22c55e', '#3b82f6', '#14b8a6', '#ec4899'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: value => '£' + (value / 1000000).toFixed(1) + 'M'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize
+    updateTable();
+    renderVolumeChart();
+    renderSectorChart();
+
+    // Update every 3 seconds
+    setInterval(addNewTransaction, 3000);
+</script>
+{% endblock %}

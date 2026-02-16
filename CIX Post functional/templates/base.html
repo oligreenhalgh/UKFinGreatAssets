@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CIX - {% block title %}Investment Platform{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">⟨⟩</span>
+                    <span>CIX</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('portfolio') }}" class="nav-item {% if active == 'portfolio' %}active{% endif %}">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Portfolio</span>
+                </a>
+                <a href="{{ url_for('insights') }}" class="nav-item {% if active == 'insights' %}active{% endif %}">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Insights</span>
+                </a>
+                <a href="{{ url_for('marketplace') }}"
+                    class="nav-item {% if active == 'marketplace' %}active{% endif %}">
+                    <span class="nav-icon">🛒</span>
+                    <span class="nav-text">Marketplace</span>
+                </a>
+                <a href="{{ url_for('exchange') }}" class="nav-item {% if active == 'exchange' %}active{% endif %}">
+                    <span class="nav-icon">💱</span>
+                    <span class="nav-text">Exchange</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

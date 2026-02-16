@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Insights{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 30px;">Investment Thesis Insights</h1>
+
+<!-- Upload Zone -->
+<div class="upload-zone" id="uploadZone">
+    <div class="upload-icon">📄</div>
+    <div class="upload-text">Drag & Drop your Investment Thesis PDF here</div>
+    <div class="upload-hint">or click to browse files</div>
+    <input type="file" id="fileInput" accept=".pdf" style="display: none;">
+</div>
+
+<div id="processingIndicator" style="display: none; text-align: center; padding: 20px;">
+    <div class="loading">
+        <div class="spinner"></div>
+        <span>Processing thesis with AI... This may take a moment.</span>
+    </div>
+</div>
+
+<!-- Thesis Summary (shown after upload) -->
+<div id="thesisSummary" style="{% if not thesis %}display: none;{% endif %} margin-top: 30px;">
+    <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header gradient-blue">
+            <span>📋</span> Thesis Summary
+        </div>
+        <div class="card-body">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <div>
+                    <span style="color: var(--text-secondary);">Investment Amount:</span>
+                    <span style="font-size: 1.5rem; font-weight: 700; margin-left: 12px; color: var(--accent-cyan);"
+                        id="thesisAmount">
+                        {% if thesis %}£{{ thesis.amount_millions }}M{% endif %}
+                    </span>
+                </div>
+                <div>
+                    <span style="color: var(--text-secondary);">Timeline:</span>
+                    <span style="font-weight: 600; margin-left: 12px;" id="thesisTimeline">
+                        {% if thesis %}{{ thesis.timeline }}{% endif %}
+                    </span>
+                </div>
+            </div>
+            <div>
+                <h4 style="margin-bottom: 10px;">Overview</h4>
+                <p style="color: var(--text-secondary); line-height: 1.6;" id="thesisOverview">
+                    {% if thesis %}{{ thesis.overview }}{% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Focus Sectors -->
+    <div class="card" style="margin-bottom: 20px;">
+        <div class="card-header gradient-purple">
+            <span>🎯</span> Focus Sectors (To Dilute)
+        </div>
+        <div class="card-body">
+            <div id="focusSectors" style="display: flex; flex-wrap: wrap; gap: 12px;">
+                {% if thesis and thesis.desired_sectors %}
+                {% for sector, weight in thesis.desired_sectors.items() %}
+                <div style="background: var(--bg-secondary); padding: 12px 20px; border-radius: 8px;">
+                    <span class="badge badge-sector">{{ sector.replace('_', ' ') }}</span>
+                    <span style="margin-left: 8px; font-weight: 600;">{{ (weight * 100)|round(1) }}%</span>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs Grid -->
+    <div class="insights-grid">
+        <div class="card">
+            <div class="card-header gradient-green">
+                <span>📊</span> Key Performance Indicators
+            </div>
+            <div class="card-body">
+                <ul class="kpi-list" id="kpiList">
+                    {% if thesis and thesis.kpis %}
+                    {% for kpi in thesis.kpis %}
+                    <li class="kpi-item">✓ {{ kpi }}</li>
+                    {% endfor %}
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                <span>✨</span> AI Recommendations
+            </div>
+            <div class="card-body">
+                <div class="insight-card"
+                    style="margin-bottom: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                    <div class="insight-title">🔄 Portfolio Rebalancing</div>
+                    <div class="insight-text">Based on your thesis, invest in non-focus sectors to dilute your current
+                        overweight positions in Financial and Life Science.</div>
+                </div>
+                <div class="insight-card"
+                    style="margin-bottom: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                    <div class="insight-title">📈 Growth Opportunities</div>
+                    <div class="insight-text">Clean Energy and Digital Technologies sectors show strong potential for
+                        diversification with lower correlation to your current holdings.</div>
+                </div>
+                <div class="insight-card" style="padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                    <div class="insight-title">⚠️ Risk Considerations</div>
+                    <div class="insight-text">Target annualized loss rate below 3% for core sleeve. Consider assets with
+                        strong collateral coverage.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const processingIndicator = document.getElementById('processingIndicator');
+    const thesisSummary = document.getElementById('thesisSummary');
+
+    // Click to upload
+    uploadZone.addEventListener('click', () => fileInput.click());
+
+    // Drag and drop handlers
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+    });
+
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+    });
+
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type === 'application/pdf') {
+            uploadFile(file);
+        }
+    });
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files[0]) {
+            uploadFile(fileInput.files[0]);
+        }
+    });
+
+    async function uploadFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        uploadZone.style.display = 'none';
+        processingIndicator.style.display = 'block';
+
+        try {
+            const response = await fetch('/api/upload-thesis', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Poll for results
+                pollForResults();
+            } else {
+                alert('Upload failed: ' + result.error);
+                uploadZone.style.display = 'block';
+                processingIndicator.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Upload failed. Please try again.');
+            uploadZone.style.display = 'block';
+            processingIndicator.style.display = 'none';
+        }
+    }
+
+    let pollInterval;
+    let lastTimestamp = 0;
+
+    async function pollForResults() {
+        pollInterval = setInterval(async () => {
+            try {
+                const response = await fetch('/api/results-timestamp');
+                const data = await response.json();
+
+                if (data.exists && data.timestamp > lastTimestamp) {
+                    lastTimestamp = data.timestamp;
+                    clearInterval(pollInterval);
+                    await loadThesis();
+                    processingIndicator.style.display = 'none';
+                    thesisSummary.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Poll error:', error);
+            }
+        }, 2000);
+    }
+
+    async function loadThesis() {
+        try {
+            const response = await fetch('/api/thesis');
+            const thesis = await response.json();
+
+            if (thesis) {
+                document.getElementById('thesisAmount').textContent = '£' + thesis.amount_millions + 'M';
+                document.getElementById('thesisTimeline').textContent = thesis.timeline || 'Not specified';
+                document.getElementById('thesisOverview').textContent = thesis.overview || '';
+
+                // Focus sectors
+                const sectorsDiv = document.getElementById('focusSectors');
+                sectorsDiv.innerHTML = Object.entries(thesis.desired_sectors || {}).map(([sector, weight]) => `
+                <div style="background: var(--bg-secondary); padding: 12px 20px; border-radius: 8px;">
+                    <span class="badge badge-sector">${sector.replace('_', ' ')}</span>
+                    <span style="margin-left: 8px; font-weight: 600;">${(weight * 100).toFixed(1)}%</span>
+                </div>
+            `).join('');
+
+                // KPIs
+                const kpiList = document.getElementById('kpiList');
+                kpiList.innerHTML = (thesis.kpis || []).map(kpi => `
+                <li class="kpi-item">✓ ${kpi}</li>
+            `).join('');
+            }
+        } catch (error) {
+            console.error('Error loading thesis:', error);
+        }
+    }
+
+    // Initial load if thesis exists
+    {% if thesis %}
+    lastTimestamp = Date.now() / 1000;
+    {% endif %}
+</script>
+{% endblock %}

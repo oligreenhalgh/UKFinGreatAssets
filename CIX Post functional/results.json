@@ -1,0 +1,72 @@
+{
+  "thesis": {
+    "amount_millions": 7.5,
+    "desired_sectors": {
+      "Financial": 0.7,
+      "Life_Science": 0.3
+    },
+    "overview": "The investment thesis recommends deploying \u00a37.50 million into a portfolio-acquisition strategy focused on diversified pools of senior, short-duration SME credit exposures. The objective is to dilute current leverage, stabilize cash generation, and improve debt service capacity by acquiring high-cash-pay, self-liquidating assets. This strategy includes a dedicated 30% allocation to Life Science SME debt portfolios and 70% to diversified SME credit portfolios, targeting a 7-9% net cash yield.",
+    "kpis": [
+      "Net cash yield: 7\u20139% at steady state",
+      "Collection efficiency: >95% of expected collections (receivables pools)",
+      "30+ day delinquency ratio: maintained below agreed pool thresholds (set per asset type)",
+      "Annualized net loss rate: <3% core sleeve; <5% Life Science sleeve",
+      "Recovery rate on defaults: >75% core sleeve; >70% Life Science sleeve",
+      "Concentration: top 10 obligors <15% of any pool; single sector <20% (unless explicitly approved)",
+      "Portfolio debt service coverage improvement quarter-on-quarter",
+      "Look-through LTV reduction of 5\u20138 pts over 18\u201324 months",
+      "Principal returned (collections/amortization) as % of invested capital: 25\u201335% by end of year two (depending on pool mix)"
+    ],
+    "timeline": "12\u201318 month investment period (deployment); 18-24 months for look-through LTV reduction and stabilization."
+  },
+  "deals_selected": [
+    {
+      "deal_id": "FAI AUTOMOTIVE LIMITED",
+      "sector": "Retail",
+      "fraction": 0.5777,
+      "amount_gbp": 1968750.01,
+      "deal_size_gbp": 3407640.9000000004
+    },
+    {
+      "deal_id": "ENTRUST SECURITY UK LIMITED",
+      "sector": "Digital&Technologies",
+      "fraction": 0.2929,
+      "amount_gbp": 1968749.97,
+      "deal_size_gbp": 6720600.0
+    },
+    {
+      "deal_id": "NIMAX THEATRES LIMITED",
+      "sector": "Creative_Industries",
+      "fraction": 0.4488,
+      "amount_gbp": 1593750.0,
+      "deal_size_gbp": 3550817.2
+    },
+    {
+      "deal_id": "BROCKLOCH RIG WINDFARM LIMITED",
+      "sector": "Clean_Energy",
+      "fraction": 0.4881,
+      "amount_gbp": 1238983.7,
+      "deal_size_gbp": 2538300.0
+    },
+    {
+      "deal_id": "SOUTHGATE LIGHTING LIMITED",
+      "sector": "Clean_Energy",
+      "fraction": 1.0,
+      "amount_gbp": 729766.3,
+      "deal_size_gbp": 729766.3
+    }
+  ],
+  "total_investment_gbp": 7499999.98,
+  "sector_allocation": {
+    "Financial": 0.0,
+    "Life_Science": 0.0,
+    "Digital&Technologies": 0.2625,
+    "Clean_Energy": 0.2625,
+    "Defence": 0.0,
+    "Professional_Business": 0.0,
+    "Retail": 0.2625,
+    "Advanced_Manufacturing": 0.0,
+    "Real_Estate": 0.0,
+    "Creative_Industries": 0.2125
+  }
+}

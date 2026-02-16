@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block title %}Portfolio{% endblock %}
+
+{% block content %}
+<!-- Metric Cards -->
+<div class="metrics-row">
+    <div class="metric-card">
+        <div class="metric-label">
+            <span>💰</span> Total Invested
+        </div>
+        <div class="metric-value" id="totalInvested">£8,010,000.00</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">
+            <span>📈</span> Average ROI
+        </div>
+        <div class="metric-value" id="averageRoi">14.29%</div>
+    </div>
+    <div class="metric-card">
+        <div class="metric-label">
+            <span>🏢</span> Total Businesses
+        </div>
+        <div class="metric-value" id="totalBusinesses">20</div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="charts-grid">
+    <div class="chart-container">
+        <div class="chart-title">
+            <span>🔄</span> Sector Breakdown
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="sectorChart"></canvas>
+        </div>
+    </div>
+    <div class="chart-container">
+        <div class="chart-title">
+            <span>📍</span> Investments by Location
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="locationChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Portfolio Analysis Cards -->
+<div class="charts-grid">
+    <div class="card">
+        <div class="card-header gradient-purple">
+            <span>🛡️</span> Portfolio Analysis
+        </div>
+        <div class="card-body">
+            <div style="margin-bottom: 16px;">
+                <span>Risk Profile:</span>
+                <span class="badge badge-risk low" style="margin-left: 8px;">Conservative</span>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <span>⚠️</span>
+                    <span style="color: var(--text-secondary);">Sector Diversification: 22%</span>
+                    <span class="badge badge-risk high" style="margin-left: auto;">Low</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill"
+                        style="width: 22%; background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);"></div>
+                </div>
+            </div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <span>✅</span>
+                    <span style="color: var(--text-secondary);">Geographic Diversification: 85%</span>
+                    <span class="badge badge-risk low" style="margin-left: auto;">High</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 85%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header gradient-green">
+            <span>✨</span> AI Recommendations
+        </div>
+        <div class="card-body" id="aiRecommendations">
+            <div class="insight-card"
+                style="margin-bottom: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                <div class="insight-title">ROI Optimization</div>
+                <div class="insight-text" id="roiInsight">Loading...</div>
+            </div>
+            <div class="insight-card"
+                style="margin-bottom: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                <div class="insight-title">Risk Management</div>
+                <div class="insight-text" id="riskInsight">Loading...</div>
+            </div>
+            <div class="insight-card" style="padding: 12px; background: var(--bg-secondary); border-radius: 8px;">
+                <div class="insight-title">Sector Diversification</div>
+                <div class="insight-text" id="diversificationInsight">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Over Time -->
+<div class="card" style="margin-bottom: 30px;">
+    <div class="card-header">
+        <span>📊</span> Performance Over Time
+    </div>
+    <div class="card-body">
+        <div class="chart-wrapper" style="height: 300px;">
+            <canvas id="performanceChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Data Table -->
+<div class="card">
+    <div class="card-header">
+        <span>🏢</span> Business Loan Portfolio
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Sector</th>
+                    <th>Location</th>
+                    <th>Loan Band</th>
+                    <th>ROI Band</th>
+                    <th>Date</th>
+                    <th>Risk Level</th>
+                </tr>
+            </thead>
+            <tbody id="portfolioTable">
+                <!-- Populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Load portfolio data and render charts
+    async function loadPortfolio() {
+        try {
+            const response = await fetch('/api/portfolio');
+            const data = await response.json();
+
+            // Update metrics
+            document.getElementById('totalInvested').textContent = '£' + data.total_invested.toLocaleString('en-GB', { minimumFractionDigits: 2 });
+            document.getElementById('averageRoi').textContent = data.average_roi + '%';
+            document.getElementById('totalBusinesses').textContent = data.total_businesses;
+
+            // Render sector pie chart
+            renderSectorChart(data.sector_breakdown);
+
+            // Render location bar chart
+            renderLocationChart(data.location_breakdown);
+
+            // Render performance chart
+            renderPerformanceChart();
+
+            // Populate table
+            populateTable(data.assets);
+
+            // Update AI insights based on current portfolio
+            updateAIInsights(data);
+        } catch (error) {
+            console.error('Error loading portfolio:', error);
+        }
+    }
+
+    function updateAIInsights(data) {
+        const sectorBreakdown = data.sector_breakdown || {};
+        const sectors = Object.entries(sectorBreakdown).sort((a, b) => b[1] - a[1]);
+
+        // ROI Insight
+        const roiInsight = document.getElementById('roiInsight');
+        roiInsight.textContent = `Average portfolio ROI is ${data.average_roi}%. ${data.average_roi >= 15 ? 'Excellent performance! Your portfolio is outperforming market benchmarks.' :
+                data.average_roi >= 10 ? 'Good performance. Consider rebalancing towards higher-performing sectors.' :
+                    'ROI is below target. Review underperforming assets for potential rebalancing.'
+            }`;
+
+        // Risk Insight
+        const riskInsight = document.getElementById('riskInsight');
+        const numSectors = sectors.length;
+        const riskProfile = numSectors >= 5 ? 'Conservative' : numSectors >= 3 ? 'Moderate' : 'Aggressive';
+        riskInsight.textContent = `Current risk profile is ${riskProfile} with ${numSectors} sector${numSectors !== 1 ? 's' : ''}. ${numSectors >= 5 ? 'Portfolio is well diversified across multiple sectors.' :
+                numSectors >= 3 ? 'Consider adding exposure to new sectors for better risk distribution.' :
+                    'High concentration risk. Urgently diversify into additional sectors.'
+            }`;
+
+        // Diversification Insight
+        const diversificationInsight = document.getElementById('diversificationInsight');
+        if (sectors.length > 0) {
+            const topSector = sectors[0];
+            const topPct = (topSector[1] * 100).toFixed(1);
+            const otherSectors = ['Clean Energy', 'Digital Technologies', 'Creative Industries', 'Real Estate']
+                .filter(s => !sectors.find(([name]) => name.toLowerCase().includes(s.toLowerCase().split(' ')[0])));
+
+            diversificationInsight.textContent = `${topPct > 50 ? '⚠️ Portfolio is heavily weighted in ' + topSector[0].replace('_', ' ') + ' (' + topPct + '%).' :
+                    topPct > 30 ? 'Largest holding is ' + topSector[0].replace('_', ' ') + ' at ' + topPct + '%.' :
+                        '✅ Portfolio is well balanced across sectors.'
+                } ${otherSectors.length > 0 ? 'Consider diversifying into ' + otherSectors.slice(0, 2).join(' or ') + '.' : ''}`;
+        } else {
+            diversificationInsight.textContent = 'No sector data available. Add investments to see diversification analysis.';
+        }
+    }
+
+    function renderSectorChart(data) {
+        const ctx = document.getElementById('sectorChart').getContext('2d');
+        const labels = Object.keys(data).map(s => s.replace('_', ' '));
+        const values = Object.values(data).map(v => v * 100);
+        const colors = ['#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#22c55e', '#ec4899', '#64748b', '#8b5cf6'];
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: colors.slice(0, labels.length),
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Investment Distribution by Sector'
+                    }
+                }
+            }
+        });
+    }
+
+    function renderLocationChart(data) {
+        const ctx = document.getElementById('locationChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(data),
+                datasets: [{
+                    label: 'Total Invested (£)',
+                    data: Object.values(data),
+                    backgroundColor: '#10b981',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: 'Investment Distribution by Location'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: value => '£' + (value / 1000000).toFixed(1) + 'M'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderPerformanceChart() {
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        const months = ['Jan 2023', 'Feb 2023', 'Mar 2023', 'Apr 2023', 'May 2023', 'Jun 2023', 'Jul 2023'];
+        const roiData = [11, 12, 18, 14, 16, 20, 15, 17, 19, 14, 18, 20, 16, 13];
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'ROI (%)',
+                    data: roiData.slice(0, 7),
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Portfolio ROI Trend'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 8,
+                        max: 22
+                    }
+                }
+            }
+        });
+    }
+
+    function populateTable(assets) {
+        const tbody = document.getElementById('portfolioTable');
+        tbody.innerHTML = assets.map(asset => `
+        <tr>
+            <td>${asset.id}</td>
+            <td><span class="badge badge-sector ${asset.sector.toLowerCase()}">${asset.sector.replace('_', ' ')}</span></td>
+            <td>${asset.location}</td>
+            <td><span class="badge badge-loan">${asset.loan_band}</span></td>
+            <td><span class="badge badge-roi ${asset.roi_band.includes('High') ? 'high' : asset.roi_band.includes('Medium') ? 'medium' : 'low'}">${asset.roi_band}</span></td>
+            <td>${asset.date}</td>
+            <td><span class="badge badge-risk ${asset.risk_level.includes('Low') ? 'low' : asset.risk_level.includes('Medium') ? 'medium' : 'high'}">${asset.risk_level}</span></td>
+        </tr>
+    `).join('');
+    }
+
+    // Initialize
+    loadPortfolio();
+</script>
+{% endblock %}
