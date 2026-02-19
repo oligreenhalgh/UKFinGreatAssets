@@ -53,49 +53,6 @@ UKFinGreatAssets/
 
 ```
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-* Python 3.13+
-* **[TODO: Add other dependencies like Flask, PuLP, PyPDF2, etc., once confirmed by teammate]**
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone [https://github.com/oligreenhalgh/ukfingreatassets.git](https://github.com/oligreenhalgh/ukfingreatassets.git)
-cd ukfingreatassets/"CIX Post functional"
-
-```
-
-
-2. Install dependencies:
-```bash
-# [TODO: Add specific installation command once tech stack is confirmed, e.g., pip install -r requirements.txt]
-
-```
-
-
-3. **[TODO: Add any specific environment variable setup steps here if needed, such as LLM API keys]**
-4. Run the Web Application:
-```bash
-python app.py
-
-```
-
-
-The application will be available at `http://localhost:5000`.
-
-### CLI Usage
-
-You can also run the core pipeline directly from the command line without the web interface:
-
-```bash
-python main_pipeline.py path/to/thesis.pdf --csv path/to/dataset.csv -o results.json
-
-```
-
 ## 👥 Team
 
 * Oliver Greenhalgh - [@oligreenhalgh](https://www.google.com/search?q=https://github.com/oligreenhalgh)
